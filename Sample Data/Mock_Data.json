@@ -1,0 +1,12 @@
+[
+  {"id": 1, "email": "ayesha.khan@example.com", "password": "P@ssw0rd12"},
+  {"id": 2, "email": "hamza.raza@example.com", "password": "Secure#456"},
+  {"id": 3, "email": "sara.ahmed@example.com", "password": "Test$789Word"},
+  {"id": 4, "email": "bilal.tariq@example.com", "password": "MyPass#2024"},
+  {"id": 5, "email": "zainab.malik@example.com", "password": "Login!987Key"},
+  {"id": 6, "email": "usman.iqbal@example.com", "password": "Access@321"},
+  {"id": 7, "email": "hira.shah@example.com", "password": "Demo#654Test"},
+  {"id": 8, "email": "faizan.qureshi@example.com", "password": "SafePass#11"},
+  {"id": 9, "email": "mahnoor.siddiqui@example.com", "password": "User$2026Pass"},
+  {"id": 10, "email": "ali.hassan@example.com", "password": "Guard!456"}
+]

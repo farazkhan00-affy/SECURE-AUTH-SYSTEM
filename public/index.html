@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Secure Auth System</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 420px; margin: 50px auto; padding: 20px; background:#f4f6f8; }
+  h2 { color: #2c3e50; }
+  input { width: 100%; padding: 10px; margin: 6px 0; box-sizing: border-box; }
+  button { width: 100%; padding: 10px; background: #2c7be5; color: white; border: none; margin-top: 8px; cursor:pointer; }
+  #qrBox img { margin-top: 10px; }
+  .section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+  a.google-btn { display:block; text-align:center; background:#db4437; color:white; padding:10px; text-decoration:none; margin-top:10px; border-radius:4px; }
+</style>
+</head>
+<body>
+  <h2>🔐 Secure Auth System</h2>
+
+  <div class="section">
+    <h3>1. Register</h3>
+    <input id="regEmail" placeholder="Email">
+    <input id="regPass" type="password" placeholder="Password">
+    <button onclick="register()">Register</button>
+  </div>
+
+  <div class="section">
+    <h3>2. Login</h3>
+    <input id="loginEmail" placeholder="Email">
+    <input id="loginPass" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <a class="google-btn" href="/auth/google">Login with Google (OAuth 2.0)</a>
+  </div>
+
+  <div class="section" id="qrSection" style="display:none;">
+    <h3>3. Setup 2FA (Google Authenticator)</h3>
+    <div id="qrBox"></div>
+    <input id="twoFAToken" placeholder="Enter 6-digit code">
+    <button onclick="verify2FA()">Verify Code</button>
+  </div>
+
+  <p id="status"></p>
+
+<script>
+let currentUserId = null;
+
+async function register() {
+  const email = document.getElementById('regEmail').value;
+  const password = document.getElementById('regPass').value;
+  const res = await fetch('/auth/register', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ email, password })
+  });
+  const data = await res.json();
+  document.getElementById('status').innerText = JSON.stringify(data);
+  if (data.userId) {
+    currentUserId = data.userId;
+    setup2FA(data.userId);
+  }
+}
+
+async function setup2FA(userId) {
+  const res = await fetch('/auth/2fa/setup/' + userId);
+  const data = await res.json();
+  document.getElementById('qrSection').style.display = 'block';
+  document.getElementById('qrBox').innerHTML = `<img src="${data.qrCodeImage}" width="200">`;
+}
+
+async function verify2FA() {
+  const token = document.getElementById('twoFAToken').value;
+  const res = await fetch('/auth/2fa/verify', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ userId: currentUserId, token })
+  });
+  const data = await res.json();
+  document.getElementById('status').innerText = JSON.stringify(data);
+}
+
+async function login() {
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPass').value;
+  const res = await fetch('/auth/login', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ email, password })
+  });
+  const data = await res.json();
+  document.getElementById('status').innerText = JSON.stringify(data);
+  if (data.requires2FA) {
+    currentUserId = data.userId;
+    document.getElementById('qrSection').style.display = 'block';
+    document.getElementById('qrBox').innerHTML = '<p>Apni Google Authenticator app se code daalo</p>';
+  }
+}
+</script>
+</body>
+</html>
