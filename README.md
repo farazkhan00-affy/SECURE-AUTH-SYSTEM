@@ -1,141 +1,88 @@
-# 🔐 Secure User Authentication System
+# Secure User Authentication System
 
-## Ye kya hai? (Bacho wali analogy)
+A secure authentication system implementing multi-factor authentication, OAuth 2.0 federated login, and AES-256 data encryption — built as part of the Internee.pk internship program.
 
-Socho tumhara ek ghar hai (**user account**).
+## Overview
 
-1. **Password** = ghar ki normal chaabi 🔑
-2. **2FA (Google Authenticator)** = ghar ke andar ek doosra lock jiski chaabi sirf tumhare **mobile** mein hoti hai aur har 30 second mein badal jaati hai. Koi chor password chura bhi le, dusra lock nahi khol sakta.
-3. **OAuth 2.0 (Google Login)** = tumhare dost (Google) ke paas already tumhari ID hai, wo guard se keh deta hai "haan ye banda sahi hai, ander jaane do" — bina tumhe naya password banaye.
-4. **AES-256 Encryption** = tumhara email/data ek locked box mein dala jata hai jo sirf ek khaas chaabi (encryption key) se khulta hai. Agar koi database chura bhi le, usse sirf ulta-seedha code dikhega, asli email nahi.
+This project strengthens user authentication and data security by combining three complementary security mechanisms:
 
-Ye project in chaaron cheezon ko implement karta hai — sab **free** tools se.
+- **Two-Factor Authentication (2FA)** via Time-based One-Time Passwords (TOTP), compatible with Google Authenticator
+- **OAuth 2.0** federated login via Google, enabling secure sign-in without password exchange
+- **AES-256 encryption** for sensitive user data at rest
 
----
+## Features
 
-## Kaunse Free Tools use huye
+| Feature | Implementation |
+|---|---|
+| Password security | Passwords hashed with bcrypt (salted, one-way) |
+| Two-Factor Authentication | TOTP standard (RFC 6238) via `speakeasy`, QR-code enrollment via `qrcode` |
+| OAuth 2.0 | Google OAuth login via Passport.js |
+| Data encryption | AES-256-CBC encryption for stored email addresses via Node's native `crypto` module |
+| Session management | Server-side sessions via `express-session` |
 
-| Kaam | Tool | Free? |
-|---|---|---|
-| Server | Node.js + Express | ✅ Free |
-| 2FA | speakeasy + qrcode (npm packages) | ✅ Free |
-| OAuth 2.0 | Passport.js + Google OAuth | ✅ Free (Google Cloud Console free tier) |
-| Encryption | Node's built-in `crypto` module | ✅ Free (no package needed) |
-| Database | JSON file (staging ke liye) / Mockaroo fake data | ✅ Free |
+## Tech Stack
 
-Koi bhi paid service, koi hosting bill, koi credit card involve nahi.
+- **Backend:** Node.js, Express
+- **Authentication:** Passport.js, Google OAuth 2.0, Speakeasy (TOTP)
+- **Encryption:** Node.js `crypto` module (AES-256-CBC), bcryptjs (password hashing)
+- **Data store:** JSON-based staging store (demo/testing purposes)
+- **Test data:** Sample fake user dataset (`sample-data/MOCK_DATA.json`), generated in the style of Mockaroo
 
----
+## Project Structure
 
-## Step 1: Node.js install karo (agar pehle se nahi hai)
-
-Terminal mein check karo:
-```bash
-node -v
-npm -v
 ```
-Agar nahi hai to https://nodejs.org se LTS version download kar lo (free).
+secure-auth-system/
+├── routes/
+│   └── auth.js          # Registration, login, 2FA, OAuth routes
+├── utils/
+│   ├── encryption.js    # AES-256 encrypt/decrypt helpers
+│   └── mockData.js      # User data store operations
+├── public/
+│   └── index.html       # Demo front-end (register/login/2FA UI)
+├── sample-data/
+│   └── MOCK_DATA.json   # Sample fake user dataset for testing
+├── server.js            # Application entry point
+├── package.json
+└── .env.example          # Environment variable template
+```
 
----
+## Setup Instructions
 
-## Step 2: Project setup
+### Prerequisites
+- Node.js (LTS version)
+- A free Google Cloud account (for OAuth credentials)
 
-Is poore folder ko apne computer par le jao, phir terminal mein:
+### Installation
 
 ```bash
-cd secure-auth-system
 npm install
-```
-
-Ye sab dependencies (express, bcryptjs, speakeasy, qrcode, passport waghera) automatically install kar dega.
-
----
-
-## Step 3: `.env` file banao
-
-```bash
 cp .env.example .env
 ```
 
-Phir `.env` file open karke:
-- `SESSION_SECRET` mein koi bhi random lambi string daal do
-- `ENCRYPTION_KEY` **exactly 32 characters** ki honi chahiye (jaisi maine example mein di hai, chahiyo to same rakh lo demo ke liye)
+Update `.env` with your own `SESSION_SECRET`, `ENCRYPTION_KEY` (32 characters), and Google OAuth credentials.
 
----
+### Google OAuth 2.0 Setup
+1. Create a project at [Google Cloud Console](https://console.cloud.google.com/)
+2. Navigate to **APIs & Services → Credentials**
+3. Create an **OAuth Client ID** (Web application type)
+4. Add authorized redirect URI: `http://localhost:3000/auth/google/callback`
+5. Copy the Client ID and Secret into `.env`
 
-## Step 4: Google OAuth 2.0 credentials (FREE)
-
-1. Jao: https://console.cloud.google.com/
-2. Naya project banao (free)
-3. "APIs & Services" → "Credentials" → "Create Credentials" → "OAuth Client ID"
-4. Application type: **Web application**
-5. Authorized redirect URI mein daalo:
-   ```
-   http://localhost:3000/auth/google/callback
-   ```
-6. Jo `Client ID` aur `Client Secret` milega, wo `.env` file mein paste kar do
-
-Ye bilkul free hai, Google koi charge nahi karta OAuth credentials banane ka.
-
----
-
-## Step 5: Server chalao
+### Run the application
 
 ```bash
 npm start
 ```
 
-Browser mein jao: `http://localhost:3000`
+Visit `http://localhost:3000` to test registration, login, 2FA setup, and Google OAuth login.
 
-Yahan se:
-- **Register** karo (email + password) → tumhara email AES-256 se encrypt ho kar `users.json` mein save hoga
-- Register hote hi QR code dikhega → apne phone mein **Google Authenticator app** kholo (Play Store se free) → "Scan QR" karo
-- App mein 6-digit code aayega → wahi code website par daalo → 2FA activate ho jayega
-- Ab jab bhi login karoge, password ke baad 2FA code bhi maangega
-- "Login with Google" button se OAuth 2.0 bhi test kar sakte ho
+## Security Design Notes
 
----
+- Passwords are never stored in plaintext — bcrypt hashing with per-password salt
+- Email addresses are encrypted using AES-256-CBC before being persisted
+- 2FA secrets follow the TOTP standard, compatible with any standard authenticator app
+- OAuth 2.0 flow ensures credentials are never shared with this application directly
 
-## Step 6 (Optional): Mockaroo se fake data generate karna
+## Author
 
-Agar task mein Mockaroo se fake users chahiye:
-1. Jao https://mockaroo.com (free plan mein 1000 rows tak free hai)
-2. Fields banao: `id`, `email`, `password`
-3. Format: JSON select karke Download karo
-4. Us file ko `users.json` mein daal do (ya seed script bana kar import kar lo)
-
----
-
-## Submission (same tareeqa jaisa pehle tasks mein tha)
-
-1. **GitHub**: Naya public repo banao, ye poora folder push kar do
-   ```bash
-   git init
-   git add .
-   git commit -m "Secure User Authentication System - 2FA, OAuth 2.0, AES-256"
-   git branch -M main
-   git remote add origin https://github.com/<your-username>/secure-auth-system.git
-   git push -u origin main
-   ```
-   ⚠️ `.env` file ko push MAT karna (secrets hai). `.gitignore` file add karo:
-   ```bash
-   echo "node_modules/
-.env
-users.json" > .gitignore
-   ```
-
-2. **LinkedIn post**: Chota post likho, jaise:
-   > "Completed my internship task at Internee.pk — Built a Secure User Authentication System with 2FA (Google Authenticator), OAuth 2.0, and AES-256 encryption using Node.js. #Internship #CyberSecurity #NodeJS"
-
-   GitHub repo link post mein add karo, screenshot bhi laga do.
-
-3. Task Portal mein "Submit Work" par jao aur GitHub + LinkedIn link paste kar do.
-
----
-
-## Security Notes (agar koi pooche)
-
-- Password kabhi plain text mein save nahi hota — bcrypt se hash hota hai
-- Email AES-256 se encrypted store hota hai
-- 2FA secret bhi TOTP standard (RFC 6238) follow karta hai, jo Google Authenticator use karta hai
-- OAuth 2.0 se koi password Google ke bahar share nahi hota
+Faraz Hussain — Internee.pk Internship Program
